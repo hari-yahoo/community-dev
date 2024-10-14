@@ -1,96 +1,179 @@
-1. Introduction
-1.1. Welcome and Purpose of the Presentation
+import os
+import pymysql
+import json
+import logging
+from datetime import datetime, timedelta
 
-Brief introduction of yourself and the purpose of the 8-week assessment.
-High-level goals of the assessment (e.g., to evaluate and optimize the database, APIs, and data flows).
-1.2. Agenda Overview
+# Set up logging
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
-Provide a clear agenda of the presentation, outlining the key areas to be covered:
-Assessment Scope
-Key Findings
-Database Schema Assessment
-Data Flow Assessment
-API Assessment
-Recommendations and Action Plan
-Q&A
-2. Assessment Scope
-2.1. Objective of the Assessment
-Briefly explain the objectives of the 8-week assessment:
-Understanding and documenting the current architecture (database, APIs, data flow).
-Identifying areas for optimization and streamlining.
-Preparing for future scalability and performance improvements.
-2.2. Phases of the Assessment
-Database Schema Assessment (3 weeks)
-Data Flow Assessment (3 weeks)
-API Assessment (2 weeks)
-3. Key Findings
-3.1. High-Level Summary
-Provide a brief summary of the overall findings across the database, APIs, and data flow.
-Mention key areas that require immediate attention (e.g., performance bottlenecks, redundancies, security risks).
-4. Database Schema Assessment (3 Weeks)
-4.1. Database Overview
+# PostgreSQL connection settings
+db_host = os.getenv("db_host")
+db_port = os.getenv("db_port")
+db_name = os.getenv("db_name")
+db_user = os.getenv("db_user")
+db_password = os.getenv("db_password")
 
-Brief overview of the databases assessed (e.g., number of databases, tables, and schemas involved).
-Mention key areas such as normalization, table relationships, and data integrity.
-4.2. Findings
 
-Schema Design: Identify issues related to naming conventions, redundant data, lack of normalization, etc.
-Indexes: Highlight areas where indexing is missing or could be optimized.
-Redundancies: Mention any redundant tables or columns identified.
-Relationships: Analyze the foreign key relationships and any potential anomalies.
-4.3. Recommendations
+def lambda_handler(event, context):
+    conn = None
+    try:
+        # Connect to PostgreSQL database
+        conn = pymysql.connect(
+            host=db_host,
+            database=db_name,
+            user=db_user,
+            password=db_password,
+            port=db_port,
+            
+        )
+        cursor = conn.cursor()
 
-Suggestions for improving schema design, normalization, and reducing redundancies.
-Adding or optimizing indexes to enhance query performance.
-Improving naming conventions and documentation.
-Better enforcement of foreign key relationships for data integrity.
-5. Data Flow Assessment (3 Weeks)
-5.1. Overview of the Data Flow
+        # Process each record in the event
+        for record in event['Records']:
+            message_body = json.loads(record['body'])
+            process_message(message_body, cursor)
+        
+        # Commit the transaction
+        conn.commit()
+        logger.info("Messages processed and committed successfully")
 
-Describe the overall data flow between systems, databases, and applications.
-Mention key processes where data flows are critical.
-5.2. Findings
+        return {
+            'statusCode': 200,
+            'body': json.dumps('Messages processed successfully')
+        }
 
-Bottlenecks: Identify any bottlenecks in the data flow.
-Data Latency: Mention areas where data synchronization or transfer is slow.
-Security: Highlight any security issues related to data flow (e.g., unsecured data transfers).
-5.3. Recommendations
+    except pymysql.Error as db_err:
+        # Log database-related errors
+        logger.error(f"Database error: {db_err}")
+        if conn:
+            conn.rollback()  # Rollback the transaction in case of error
+        return {
+            'statusCode': 500,
+            'body': json.dumps(f"Database error: {db_err}")
+        }
 
-Suggestions to streamline data flow and remove bottlenecks.
-Improvements in data transfer mechanisms (e.g., using asynchronous processing, optimizing ETL jobs).
-Enhancing data security with encryption and access controls during transfer.
-6. API Assessment (2 Weeks)
-6.1. Overview of the API Environment
+    except Exception as e:
+        # Log any other errors
+        logger.error(f"An error occurred: {e}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps(f"An error occurred: {e}")
+        }
 
-Briefly describe the APIs assessed, their purpose, and interaction with the system.
-Mention any key dependencies on external or internal systems.
-6.2. Findings
+    finally:
+        # Ensure the database connection is closed
+        if conn:
+            cursor.close()
+            conn.close()
+            logger.info("Database connection closed")
 
-Performance: Highlight API performance issues such as long response times or high failure rates.
-Documentation: Mention any gaps in API documentation, versioning, or standardization.
-Security: Identify any security vulnerabilities in API authentication or data handling.
-6.3. Recommendations
+    logger.info("Done!")
 
-Performance Optimization: Suggestions for improving API performance (e.g., caching, optimizing endpoints).
-Security Enhancements: Implementing stronger authentication mechanisms (e.g., OAuth 2.0) and securing data transmission.
-Documentation and Standardization: Recommendations for improving API documentation, versioning, and adhering to best practices like RESTful standards.
-7. Recommendations and Action Plan
-7.1. High-Priority Actions
+def process_message(message, cursor):
+    """Process the SQS message and run the necessary SQL operations."""
 
-List of the highest priority actions (short-term fixes) to be taken based on the assessment.
-7.2. Long-Term Improvements
+    # Extract message details
+    username = message.get('username')
+    course_id = message.get('course_id')
+    mode = message.get('mode')
+    total_lessons = message.get('total_number_of_lessons')
+    lesson_number = message.get('lesson_number')
+    lesson_name = message.get('lesson_name')
+    lesson_grade = message.get('lesson_grade')
+    overall_grade_percentage = message.get('overall_grade_percentage')
+    overall_progress_percentage = message.get('overall_progress_percentage')
+    lesson_started_timestamp = message.get('lesson_started_timestamp')
+    lesson_completed_timestamp = message.get('lesson_completed_timestamp')
 
-Recommendations for long-term improvements in the database structure, data flow optimization, and API enhancements.
-7.3. Future Roadmap
+    logger.info(f"Course_id is {course_id}")
 
-A roadmap with timelines for implementing these improvements.
-Assign responsibilities to teams for each of the key recommendations.
-8. Conclusion
-8.1. Key Takeaways
+    # Fetch the course_student_mapping record from DB
+    course_student_mapping = fetch_course_student_mapping(cursor, course_id, username)
 
-Summarize the most important points from the assessment and emphasize key recommendations.
-8.2. Next Steps
+    if course_student_mapping:
+        # Update course_student_mapping based on the message
+        logger.info("Student data found. Update is commented for now")
+        logger.info(course_student_mapping)
 
-Provide a clear plan for moving forward, including next steps, timelines, and follow-up meetings.
-9. Q&A
-Open the floor to questions from the audience and address any concerns or clarifications.
+        # update_course_student_mapping(
+        #     cursor, course_student_mapping, mode, overall_grade_percentage,
+        #     total_lessons, lesson_number, overall_progress_percentage,
+        #     lesson_started_timestamp
+        # )
+        
+        # Check if grade data exists and update or insert accordingly
+        # manage_grade_data(
+        #     cursor, course_student_mapping[0], lesson_name, lesson_grade, lesson_completed_timestamp
+        # )
+    else:
+        logger.warning("Error: Student Data not found. *******")
+
+def fetch_course_student_mapping(cursor, course_id, username):
+    """Fetch course_student_mapping from the database based on course_id and username."""
+
+    logger.info("Fetch course_student_mapping from the database based on course_id and username")
+
+    select_query = f"""
+    SELECT csm.* 
+    FROM course_student_mapping csm
+    LEFT JOIN xened_netsuite_course_mapping xncm ON xncm.id = csm.course_id
+    LEFT JOIN users u ON u.id = csm.user_id
+    WHERE xncm.xened_course_id = '{course_id}' AND u.sso_id = '{username}'
+    """
+    cursor.execute(select_query)
+
+    return cursor.fetchone()
+
+def update_course_student_mapping(cursor, course_student_mapping, mode, grade, total_lessons, lesson_number, progress, lesson_started_timestamp):
+    """Update the course_student_mapping based on the message data."""
+
+    update_query = f"""
+    UPDATE course_student_mapping
+    SET grade = {grade}, 
+        total_lessons = {total_lessons}, 
+        completed_till = {lesson_number}, 
+        progress = {progress}
+    """
+    # Apply conditional logic based on 'mode'
+    if mode == 'start':
+        started_at = datetime.strptime(lesson_started_timestamp, "%Y-%m-%dT%H:%M")
+        expiry_date = started_at + timedelta(days=365)
+        update_query += f", status = 'In progress', started_at = '{started_at}', expiry_date = '{expiry_date}'"
+
+    elif mode == 'complete':
+        update_query += ", status = 'Completed'"
+
+    update_query += f" WHERE id = {course_student_mapping[0]}"  # Assuming the first column is id
+    
+    cursor.execute(update_query)
+
+def manage_grade_data(cursor, course_mapping_id, lesson_name, lesson_grade, lesson_completed_timestamp):
+    """Check if grade data exists, and update or insert grade details."""
+
+    check_grade_query = f"""
+    SELECT * FROM course_grade_detail
+    WHERE course_mapping_id = {course_mapping_id} AND lesson = '{lesson_name}'
+    """
+    cursor.execute(check_grade_query)
+
+    grade_record = cursor.fetchone()
+
+    # If grade exists, update if necessary; otherwise, insert a new record
+    if grade_record:
+        if grade_record['grade'] != lesson_grade:
+            update_grade_query = f"""
+            UPDATE course_grade_detail
+            SET grade = {lesson_grade}
+            WHERE course_mapping_id = {course_mapping_id} AND lesson = '{lesson_name}'
+            """
+            cursor.execute(update_grade_query)
+    else:
+        completed_at = datetime.strptime(lesson_completed_timestamp, "%Y-%m-%dT%H:%M")
+        insert_grade_query = f"""
+        INSERT INTO course_grade_detail (course_mapping_id, lesson, grade, completed_at)
+        VALUES ({course_mapping_id}, '{lesson_name}', {lesson_grade}, '{completed_at}')
+        """
+
+        cursor.execute(insert_grade_query)
