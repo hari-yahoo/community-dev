@@ -1,4 +1,7 @@
 ```
+mysql://avnadmin:<password>@mysql-sqs-test-hari-gworks.h.aivencloud.com:28681/
+
+defaultdb?ssl-mode=REQUIRED
 required_fields = {
         'username': int,
         'course_id': str,
@@ -86,6 +89,8 @@ def extract_data_from_message(message):
                                        lesson_completed_timestamp)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
         """)
+
+6f2A8dp-hE_SRFTH
         
         # Extract data from the message and insert it
         data = extract_data_from_message(message)  # Your function to extract data
