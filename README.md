@@ -1,4 +1,22 @@
 ```
+required_fields = {
+        'username': int,
+        'course_id': str,
+        'mode': str,
+        'total_number_of_lessons': int,
+        'lesson_number': int,
+        'lesson_name': str,
+        'lesson_grade': int,
+        'overall_grade_percentage': int,
+        'overall_progress_percentage': int,
+        'lesson_started_timestamp': str,
+        'lesson_completed_timestamp': str
+    }
+for field, field_type in required_fields.items():
+            if field not in data:
+                return f"Missing required field: {field}"
+            if not isinstance(data[field], field_type):
+                return f"Field {field} should be of type {field_type.__name__}"
 
 def extract_data_from_message(message):
     try:
