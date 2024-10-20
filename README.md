@@ -1,4 +1,93 @@
 ```
+@import url(https://fonts.googleapis.com/css?family=Roboto:400,500,700,300,100);
+
+body {
+    /* background-color: #3e94ec; */
+    font-family: "Roboto", helvetica, arial, sans-serif;
+
+    text-rendering: optimizeLegibility;
+}
+article{
+    background-color: #3e94ec;
+}
+
+.datatable {
+    
+    width: 95%;
+    margin: 0 auto;
+}
+
+.datatable table {
+    border-radius: 3px;
+    border-collapse: collapse;
+
+}
+.datatable caption {
+   
+   
+    padding: 10px;
+}
+
+.datatable th {
+    color: #D5DDE5;
+    background-color:#343a45;
+    /* background: #1b1e24; */
+    border-bottom: 4px solid #9ea7af;
+    border-right: 1px solid #343a45;
+    border-left: 1px solid #343a45;
+    font-size: 18px;
+    font-weight: 100;
+    padding: 10px;
+    text-align: left;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    vertical-align: middle;
+}
+
+.datatable td {
+    background: #FFFFFF;
+    padding: 5px;
+    text-align: left;
+    vertical-align: middle;
+    font-weight: 300;
+    font-size: 16px;
+    text-shadow: -1px -1px 1px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid #C1C3D1;
+    border-left: 1px solid #C1C3D1;
+    border-bottom: 1px solid #C1C3D1;;
+    color: black;
+}
+
+.datatable tr {
+    border-top: 1px solid #C1C3D1;
+    border-bottom: 1px solid #C1C3D1;
+}
+
+
+.datatable tr:hover td {
+    background: #4E5066;
+    color: #FFFFFF;
+    /* border-top: 1px solid #22262e; */
+}
+
+.datatable tr:first-child {
+    border-top: none;
+}
+
+.datatable tr:last-child {
+    border-bottom: none;
+}
+
+.datatable tr:nth-child(odd) td {
+    background: #EBEBEB;
+}
+
+.datatable tr:nth-child(odd):hover td {
+    background: #4E5066;
+}
+
+```
+
+```
 mysql://avnadmin:<password>@mysql-sqs-test-hari-gworks.h.aivencloud.com:28681/
 
 defaultdb?ssl-mode=REQUIRED
